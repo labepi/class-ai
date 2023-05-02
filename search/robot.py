@@ -29,7 +29,7 @@ class Grid:
         self.edges = []
 
         for (i, j) in self.nodes:
-            delta = [(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)]
+            delta = [(i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1)]
             for (a, b) in delta:
                 if (a, b) in self.nodes:
                     x, xi = self.nodes[(i, j)]
