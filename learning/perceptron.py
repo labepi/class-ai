@@ -4,6 +4,7 @@ from gi.repository import Gtk, Gdk, GLib
 
 import time
 import cairo
+import random
 from math import pi
 
 WIDTH = 256
@@ -15,7 +16,10 @@ Y_AND = [0, 0, 0, 1]
 X_OR = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_OR = [0, 1, 1, 1]
 
-WEIGHTS = [1.0, 1.0, -1.5]
+X_XOR = [(0, 0), (0, 1), (1, 0), (1, 1)]
+Y_XOR = [0, 1, 1, 0]
+
+WEIGHTS = [random.random(), random.random(), random.random()]
 
 def f_step(value):
     """
@@ -24,23 +28,20 @@ def f_step(value):
         return 1.0
     return 0.0
 
-def f_line(x, w0, w1, w2, bias=1.0):
-    """
-    """
-    return (-(w1 * x) / w2) - ((w0 * bias) / w2)
-
-def perceptron(X, Y, learning_rate=0.001, bias=1.0):
+def perceptron(X, Y, bias=1.0, learning_rate=0.001):
     """
     """
     global WEIGHTS
     w0, w1, w2 = WEIGHTS
 
-    for i in range(len(X)):
+    order = list(range(len(X)))
+    order = random.sample(order, len(order))
+    for i in order:
         x1, x2 = X[i]
         d = Y[i]
 
         y = f_step((w0 * bias) + (x1 * w1) + (x2 * w2))
-        print(w0, w1, w2, x1, x2, d, y, f_line(x1, w0, w1, w2, bias))
+        print(x1, x2, d, y, w1, w2, w0)
 
         w0 = w0 + learning_rate * (d - y) * bias
         w1 = w1 + learning_rate * (d - y) * x1
@@ -61,8 +62,9 @@ def draw(context, width, height):
     global WEIGHTS, X_AND, Y_AND
     X = X_AND
     Y = Y_AND
+    bias = 1.0
 
-    perceptron(X, Y)
+    perceptron(X, Y, bias)
     w0, w1, w2 = WEIGHTS
 
     context.set_source_rgb(0.6, 0.6, 0.6)
@@ -80,9 +82,14 @@ def draw(context, width, height):
         context.rectangle(28 + 200 * x1 - 2, 28 + 200 * x2 - 2, 4, 4)
         context.fill()
 
+    slope = -(w1 / w2)
+    delta = -(w0 / w2) * bias
+
     context.set_source_rgb(0.0, 0.0, 1.0)
-    context.move_to(0, 256 * f_line(0, w0, w1, w2))
-    context.line_to(256, 256 * f_line(1, w0, w1, w2))
+    xo, yo = 28, 28 + 200 * delta
+    xd, yd = 28 + 1 * 200, 28 + 200 * (slope + delta)
+    context.move_to(xo, yo)
+    context.line_to(xd, yd)
     context.stroke()
 
 def on_draw(drawing_area, context):
