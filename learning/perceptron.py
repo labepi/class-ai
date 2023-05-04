@@ -11,7 +11,11 @@ HEIGHT = 256
 
 X_AND = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_AND = [0, 0, 0, 1]
-WEIGHTS = [0.0, 0.0, 0.0]
+
+X_OR = [(0, 0), (0, 1), (1, 0), (1, 1)]
+Y_OR = [0, 1, 1, 1]
+
+WEIGHTS = [1.0, 1.0, -1.5]
 
 def f_step(value):
     """
@@ -23,9 +27,9 @@ def f_step(value):
 def f_line(x, w0, w1, w2, bias=1.0):
     """
     """
-    return -(w1 / w2) * x - (w0 / w2) * bias
+    return (-(w1 * x) / w2) - ((w0 * bias) / w2)
 
-def perceptron(X, Y, learning_rate=0.01, bias=1.0):
+def perceptron(X, Y, learning_rate=0.001, bias=1.0):
     """
     """
     global WEIGHTS
@@ -35,7 +39,8 @@ def perceptron(X, Y, learning_rate=0.01, bias=1.0):
         x1, x2 = X[i]
         d = Y[i]
 
-        y = (w0 * bias) + (x1 * w1) + (x2 * w2)
+        y = f_step((w0 * bias) + (x1 * w1) + (x2 * w2))
+        print(w0, w1, w2, x1, x2, d, y, f_line(x1, w0, w1, w2, bias))
 
         w0 = w0 + learning_rate * (d - y) * bias
         w1 = w1 + learning_rate * (d - y) * x1
@@ -43,7 +48,7 @@ def perceptron(X, Y, learning_rate=0.01, bias=1.0):
 
     WEIGHTS = [w0, w1, w2]
 
-def draw(context , width, height):
+def draw(context, width, height):
     """
     This is the draw function, that will be called every time `queue_draw` is
     called on the drawing area. Currently, this is setup to be every frame, 60
@@ -53,7 +58,11 @@ def draw(context , width, height):
     https://www.cairographics.org/samples/
     context - cairo.Context
     """
-    perceptron(X_AND, Y_AND)
+    global WEIGHTS, X_AND, Y_AND
+    X = X_AND
+    Y = Y_AND
+
+    perceptron(X, Y)
     w0, w1, w2 = WEIGHTS
 
     context.set_source_rgb(0.6, 0.6, 0.6)
@@ -64,15 +73,17 @@ def draw(context , width, height):
     context.rectangle(28, 28, 200, 200)
     context.fill()
 
-    print(w0, w1, w2)
-    print(f_line(0, w0, w1, w2))
-    print(f_line(200, w0, w1, w2))
-    time.sleep(1)
+    for i in range(len(X)):
+        x1, x2 = X[i]
+        d = Y[i]
+        context.set_source_rgb(d, 0.0, 0.0)
+        context.rectangle(28 + 200 * x1 - 2, 28 + 200 * x2 - 2, 4, 4)
+        context.fill()
 
-    context.set_source_rgb(1.0, 0.0, 0.0)
-    context.move_to(0, -int(f_line(0, w0, w1, w2)))
-    context.line_to(256, -int(f_line(256, w0, w1, w2)))
-    context.stroke_preserve()
+    context.set_source_rgb(0.0, 0.0, 1.0)
+    context.move_to(0, 256 * f_line(0, w0, w1, w2))
+    context.line_to(256, 256 * f_line(1, w0, w1, w2))
+    context.stroke()
 
 def on_draw(drawing_area, context):
     """
