@@ -19,7 +19,13 @@ Y_OR = [0, 1, 1, 1]
 X_XOR = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_XOR = [0, 1, 1, 0]
 
-WEIGHTS = [random.random(), random.random(), random.random()]
+WEIGHTS = [-0.5, 0.0, 1.0]
+NOTDONE = 0.0
+
+def f_rand():
+    """
+    """
+    return 2 * random.random() - 1
 
 def f_step(value):
     """
@@ -31,17 +37,21 @@ def f_step(value):
 def perceptron(X, Y, bias=1.0, learning_rate=0.001):
     """
     """
-    global WEIGHTS
+    global WEIGHTS, NOTDONE
     w0, w1, w2 = WEIGHTS
 
     order = list(range(len(X)))
     order = random.sample(order, len(order))
+    NOTDONE = 0.0
     for i in order:
         x1, x2 = X[i]
         d = Y[i]
 
         y = f_step((w0 * bias) + (x1 * w1) + (x2 * w2))
-        print(x1, x2, d, y, w1, w2, w0)
+        print(x1, x2, d, y, w0, w1, w2)
+
+        if d != y:
+            NOTDONE = 1.0
 
         w0 = w0 + learning_rate * (d - y) * bias
         w1 = w1 + learning_rate * (d - y) * x1
@@ -79,15 +89,15 @@ def draw(context, width, height):
         x1, x2 = X[i]
         d = Y[i]
         context.set_source_rgb(d, 0.0, 0.0)
-        context.rectangle(28 + 200 * x1 - 2, 28 + 200 * x2 - 2, 4, 4)
+        context.rectangle(28 + 200 * x1 - 5, 28 + 200 * x2 - 5, 10, 10)
         context.fill()
 
     slope = -(w1 / w2)
     delta = -(w0 / w2) * bias
 
-    context.set_source_rgb(0.0, 0.0, 1.0)
-    xo, yo = 28, 28 + 200 * delta
-    xd, yd = 28 + 1 * 200, 28 + 200 * (slope + delta)
+    context.set_source_rgb(NOTDONE, 1.0, 0.0)
+    xo, yo = 28 - 1 * 200, 28 + 200 * (-1 * slope + delta)
+    xd, yd = 28 + 2 * 200, 28 + 200 * (2 * slope + delta)
     context.move_to(xo, yo)
     context.line_to(xd, yd)
     context.stroke()
@@ -109,23 +119,23 @@ def on_mouse_pressed(da, event, *data):
     This is called when the mouse is pressed
     """
     print("The mouse was pressed!")
+    global WEIGHTS
+    WEIGHTS = [f_rand(), f_rand(), f_rand()]
 
-def main():
+def create_window():
     """
     The main function
     """
-
     # Create a window, set it up to quit on close
-    win = Gtk.Window()
-    win.connect('destroy', Gtk.main_quit)
-    win.set_default_size(WIDTH, HEIGHT)
+    window = Gtk.Window()
+    window.connect('destroy', Gtk.main_quit)
+    window.set_default_size(WIDTH, HEIGHT)
 
     # Create a DrawingArea, add it to the window, and connect it to the
     # `on_draw` function
     drawing_area = Gtk.DrawingArea()
-    win.add(drawing_area)
+    window.add(drawing_area)
     drawing_area.connect('draw', on_draw)
-
 
     # Add a button pressed event, and connect it to the `on_mouse_pressed`
     # callback
@@ -153,8 +163,8 @@ def main():
     GLib.timeout_add(1000 / 60, refresh_screen)
 
     # Show the window
-    win.show_all()
+    window.show_all()
     Gtk.main()
 
 if __name__ == '__main__':
-    main()
+    create_window()
