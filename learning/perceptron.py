@@ -7,9 +7,6 @@ import cairo
 import random
 from math import pi
 
-WIDTH = 256
-HEIGHT = 256
-
 X_AND = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_AND = [0, 0, 0, 1]
 
@@ -19,13 +16,12 @@ Y_OR = [0, 1, 1, 1]
 X_XOR = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_XOR = [0, 1, 1, 0]
 
-WEIGHTS = [-0.5, 0.0, 1.0]
-NOTDONE = 0.0
-
-def f_rand():
+def f_signal(value):
     """
     """
-    return 2 * random.random() - 1
+    if value > 0:
+        return 1.0
+    return -1.0
 
 def f_step(value):
     """
@@ -34,30 +30,52 @@ def f_step(value):
         return 1.0
     return 0.0
 
-def perceptron(X, Y, bias=1.0, learning_rate=0.001):
+def f_rand():
     """
     """
-    global WEIGHTS, NOTDONE
-    w0, w1, w2 = WEIGHTS
+    return 2 * random.random() - 1
 
-    order = list(range(len(X)))
-    order = random.sample(order, len(order))
-    NOTDONE = 0.0
-    for i in order:
-        x1, x2 = X[i]
-        d = Y[i]
+class Perceptron:
+    """
+    """
+    def __init__(self, X, Y, learning_rate=0.001, bias=1.0):
+        """
+        """
+        self.training_set = X
+        self.desired_set = Y
+        self.set_size = len(self.training_set)
+        self.bias = bias
+        self.weights = [-0.5, 0.0, 1.0]
+        self.f_activation = f_step
+        self.learning_rate = learning_rate
+        self.change = 1.0
 
-        y = f_step((w0 * bias) + (x1 * w1) + (x2 * w2))
-        print(x1, x2, d, y, w0, w1, w2)
+    def rand_weights(self):
+        """
+        """
+        self.weights = [f_rand(), f_rand(), f_rand()]
 
-        if d != y:
-            NOTDONE = 1.0
+    def learn(self):
+        """
+        """
+        w0, w1, w2 = self.weights
+ 
+        order = random.sample(list(range(self.set_size)), self.set_size)
+        self.change = 0.0
+        for i in order:
+            x1, x2 = self.training_set[i]
+            d = self.desired_set[i]
+ 
+            y = self.f_activation((w0 * self.bias) + (x1 * w1) + (x2 * w2))
+ 
+            if d != y:
+                self.change = 1.0
+ 
+            w0 = w0 + self.learning_rate * (d - y) * self.bias
+            w1 = w1 + self.learning_rate * (d - y) * x1
+            w2 = w2 + self.learning_rate * (d - y) * x2
 
-        w0 = w0 + learning_rate * (d - y) * bias
-        w1 = w1 + learning_rate * (d - y) * x1
-        w2 = w2 + learning_rate * (d - y) * x2
-
-    WEIGHTS = [w0, w1, w2]
+        self.weights = [w0, w1, w2]
 
 def draw(context, width, height):
     """
@@ -69,13 +87,8 @@ def draw(context, width, height):
     https://www.cairographics.org/samples/
     context - cairo.Context
     """
-    global WEIGHTS, X_AND, Y_AND
-    X = X_AND
-    Y = Y_AND
-    bias = 1.0
-
-    perceptron(X, Y, bias)
-    w0, w1, w2 = WEIGHTS
+    neuron.learn()
+    w0, w1, w2 = neuron.weights
 
     context.set_source_rgb(0.6, 0.6, 0.6)
     context.rectangle(0, 0, 256, 256)
@@ -85,17 +98,17 @@ def draw(context, width, height):
     context.rectangle(28, 28, 200, 200)
     context.fill()
 
-    for i in range(len(X)):
-        x1, x2 = X[i]
-        d = Y[i]
+    for i in range(neuron.set_size):
+        x1, x2 = neuron.training_set[i]
+        d = neuron.desired_set[i]
         context.set_source_rgb(d, 0.0, 0.0)
         context.rectangle(28 + 200 * x1 - 5, 28 + 200 * x2 - 5, 10, 10)
         context.fill()
 
     slope = -(w1 / w2)
-    delta = -(w0 / w2) * bias
+    delta = -(w0 / w2) * neuron.bias
 
-    context.set_source_rgb(NOTDONE, 1.0, 0.0)
+    context.set_source_rgb(neuron.change, 1.0, 0.0)
     xo, yo = 28 - 1 * 200, 28 + 200 * (-1 * slope + delta)
     xd, yd = 28 + 2 * 200, 28 + 200 * (2 * slope + delta)
     context.move_to(xo, yo)
@@ -114,22 +127,21 @@ def on_draw(drawing_area, context):
 
     draw(context, width, height)
 
-def on_mouse_pressed(da, event, *data):
+def on_mouse_pressed(drawing_area, event, *data):
     """
     This is called when the mouse is pressed
     """
-    print("The mouse was pressed!")
-    global WEIGHTS
-    WEIGHTS = [f_rand(), f_rand(), f_rand()]
+    neuron.rand_weights()
 
-def create_window():
+def create_window(width, height):
     """
     The main function
     """
     # Create a window, set it up to quit on close
     window = Gtk.Window()
+    window.set_title("Perceptron")
     window.connect('destroy', Gtk.main_quit)
-    window.set_default_size(WIDTH, HEIGHT)
+    window.set_default_size(width, height)
 
     # Create a DrawingArea, add it to the window, and connect it to the
     # `on_draw` function
@@ -167,4 +179,7 @@ def create_window():
     Gtk.main()
 
 if __name__ == '__main__':
-    create_window()
+    """
+    """
+    neuron = Perceptron(X_AND, Y_AND)
+    create_window(256, 256)
