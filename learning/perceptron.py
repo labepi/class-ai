@@ -16,13 +16,6 @@ Y_OR = [0, 1, 1, 1]
 X_XOR = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_XOR = [0, 1, 1, 0]
 
-def f_signal(value):
-    """
-    """
-    if value > 0:
-        return 1.0
-    return -1.0
-
 def f_step(value):
     """
     """
@@ -77,109 +70,105 @@ class Perceptron:
 
         self.weights = [w0, w1, w2]
 
-def draw(context, width, height):
+class Plot2DBoundary(Gtk.Window):
     """
-    This is the draw function, that will be called every time `queue_draw` is
-    called on the drawing area. Currently, this is setup to be every frame, 60
-    times per second, but you can change that by changing line 95. 
+    """
+    def __init__(self, neuron, width=256, height=256):
+        """
+        """
+        Gtk.Window.__init__(self)
+
+        self.neuron = neuron
+        self.width = width
+        self.height = height
+        self.refresh_rate = 1000 / 60
+        self.set_title("Perceptron")
+        self.connect('destroy', Gtk.main_quit)
+        self.set_default_size(self.width, self.height)
+
+        # Create a DrawingArea, add it to the window, and connect it to the
+        # `on_draw` function
+        self.drawing_area = Gtk.DrawingArea()
+        self.add(self.drawing_area)
+        self.drawing_area.connect('draw', self.on_draw)
+
+        # Add a button pressed event, and connect it to the `on_mouse_pressed`
+        # callback
+        self.drawing_area.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        self.drawing_area.connect('button-press-event', self.on_mouse_pressed)
+ 
+        # Tell the drawing area to render
+        self.drawing_area.queue_draw()
+        GLib.timeout_add(self.refresh_rate, self.refresh_screen)
+ 
+        # Show the window
+        self.show_all()
+        Gtk.main()
+ 
+    def refresh_screen(self):
+        """
+        """
+        self.drawing_area.queue_draw()
+        GLib.timeout_add(self.refresh_rate, self.refresh_screen)
+
+    def draw(self, context, width, height):
+        """
+        This is the draw function, that will be called every time `queue_draw`
+        is called on the drawing area. Currently, this is setup to be every
+        frame, 60 times per second.
+        
+        Ported from the first example here, with minimal changes:
+        https://www.cairographics.org/samples/
+        context - cairo.Context
+        """
+        self.neuron.learn()
+        w0, w1, w2 = self.neuron.weights
     
-    Ported from the first example here, with minimal changes:
-    https://www.cairographics.org/samples/
-    context - cairo.Context
-    """
-    neuron.learn()
-    w0, w1, w2 = neuron.weights
-
-    context.set_source_rgb(0.6, 0.6, 0.6)
-    context.rectangle(0, 0, 256, 256)
-    context.fill()
-
-    context.set_source_rgb(1.0, 1.0, 1.0)
-    context.rectangle(28, 28, 200, 200)
-    context.fill()
-
-    for i in range(neuron.set_size):
-        x1, x2 = neuron.training_set[i]
-        d = neuron.desired_set[i]
-        context.set_source_rgb(d, 0.0, 0.0)
-        context.rectangle(28 + 200 * x1 - 5, 28 + 200 * x2 - 5, 10, 10)
+        context.set_source_rgb(0.6, 0.6, 0.6)
+        context.rectangle(0, 0, 256, 256)
         context.fill()
-
-    slope = -(w1 / w2)
-    delta = -(w0 / w2) * neuron.bias
-
-    context.set_source_rgb(neuron.change, 1.0, 0.0)
-    xo, yo = 28 - 1 * 200, 28 + 200 * (-1 * slope + delta)
-    xd, yd = 28 + 2 * 200, 28 + 200 * (2 * slope + delta)
-    context.move_to(xo, yo)
-    context.line_to(xd, yd)
-    context.stroke()
-
-def on_draw(drawing_area, context):
-    """
-    A callback called every time `drawingarea.queue_draw` is called.
-    area - Gtk.DrawingArea
-    context - cairo.Context
-    """
-    allocation = drawing_area.get_allocation()
-    width = allocation.width
-    height = allocation.height
-
-    draw(context, width, height)
-
-def on_mouse_pressed(drawing_area, event, *data):
-    """
-    This is called when the mouse is pressed
-    """
-    neuron.rand_weights()
-
-def create_window(width, height):
-    """
-    The main function
-    """
-    # Create a window, set it up to quit on close
-    window = Gtk.Window()
-    window.set_title("Perceptron")
-    window.connect('destroy', Gtk.main_quit)
-    window.set_default_size(width, height)
-
-    # Create a DrawingArea, add it to the window, and connect it to the
-    # `on_draw` function
-    drawing_area = Gtk.DrawingArea()
-    window.add(drawing_area)
-    drawing_area.connect('draw', on_draw)
-
-    # Add a button pressed event, and connect it to the `on_mouse_pressed`
-    # callback
-    drawing_area.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
-    drawing_area.connect('button-press-event', on_mouse_pressed)
-
-    # Tell the drawing area to render
-    drawing_area.queue_draw()
-
-    def refresh_screen():
-        drawing_area.queue_draw()
-        GLib.timeout_add(1000 / 60, refresh_screen)
-
-    # Normally, GUI Libraries don't automatically redraw the screen every
-    # frame. In order to do that, I've setup a timer to call `refresh_screen`
-    # in 16.666 milliseconds (60 FPS). `refresh_screen`, queues a draw command
-    # to re-draw the drawing area and then re-adds the timer for the next
-    # frame. This might seem like a hack, but its more-or-less the "correct"
-    # way to implement this.
-    # 
-    # If this is not the behavior you want (perhaps you only want your fractal
-    # to re-draw when the mouse button is pressed), remove this line and the
-    # `refresh_screen` function, and call `drawing_area.queue_draw()`.from
-    # somewhere else 
-    GLib.timeout_add(1000 / 60, refresh_screen)
-
-    # Show the window
-    window.show_all()
-    Gtk.main()
+    
+        context.set_source_rgb(1.0, 1.0, 1.0)
+        context.rectangle(28, 28, 200, 200)
+        context.fill()
+    
+        for i in range(self.neuron.set_size):
+            x1, x2 = self.neuron.training_set[i]
+            d = self.neuron.desired_set[i]
+            context.set_source_rgb(d, 0.0, 0.0)
+            context.rectangle(28 + 200 * x1 - 5, 28 + 200 * x2 - 5, 10, 10)
+            context.fill()
+    
+        slope = -(w1 / w2)
+        delta = -(w0 / w2) * self.neuron.bias
+    
+        context.set_source_rgb(self.neuron.change, 1.0, 0.0)
+        xo, yo = 28 - 1 * 200, 28 + 200 * (-1 * slope + delta)
+        xd, yd = 28 + 2 * 200, 28 + 200 * (2 * slope + delta)
+        context.move_to(xo, yo)
+        context.line_to(xd, yd)
+        context.stroke()
+    
+    def on_draw(self, drawing_area, context):
+        """
+        A callback called every time `drawing_area.queue_draw` is called.
+        area - Gtk.DrawingArea
+        context - cairo.Context
+        """
+        allocation = drawing_area.get_allocation()
+        width = allocation.width
+        height = allocation.height
+    
+        self.draw(context, width, height)
+    
+    def on_mouse_pressed(self, drawing_area, event, *data):
+        """
+        This is called when the mouse is pressed
+        """
+        self.neuron.rand_weights()
 
 if __name__ == '__main__':
     """
     """
     neuron = Perceptron(X_AND, Y_AND)
-    create_window(256, 256)
+    window = Plot2DBoundary(neuron)
