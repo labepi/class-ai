@@ -13,6 +13,9 @@ Y_AND = [0, 0, 0, 1]
 X_OR = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_OR = [0, 1, 1, 1]
 
+X_NAND = [(0, 0), (0, 1), (1, 0), (1, 1)]
+Y_NAND = [1, 1, 1, 0]
+
 X_XOR = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_XOR = [0, 1, 1, 0]
 
@@ -31,7 +34,7 @@ def f_rand():
 class Perceptron:
     """
     """
-    def __init__(self, X, Y, learning_rate=0.001, bias=1.0):
+    def __init__(self, X, Y, learning_rate=0.01, bias=1.0):
         """
         """
         self.training_set = X
@@ -41,11 +44,13 @@ class Perceptron:
         self.weights = [-0.5, 0.0, 1.0]
         self.f_activation = f_step
         self.learning_rate = learning_rate
+        self.count = 0
         self.change = 1.0
 
     def rand_weights(self):
         """
         """
+        self.change = 1.0
         self.weights = [f_rand(), f_rand(), f_rand()]
 
     def learn(self):
@@ -69,11 +74,12 @@ class Perceptron:
             w2 = w2 + self.learning_rate * (d - y) * x2
 
         self.weights = [w0, w1, w2]
+        self.count = self.count + 1
 
 class Plot2DBoundary(Gtk.Window):
     """
     """
-    def __init__(self, neuron, width=256, height=256):
+    def __init__(self, neuron, write_to_file=False, width=256, height=256):
         """
         """
         Gtk.Window.__init__(self)
@@ -82,6 +88,7 @@ class Plot2DBoundary(Gtk.Window):
         self.width = width
         self.height = height
         self.refresh_rate = 1000 / 60
+        self.write_to_file = write_to_file
         self.set_title("Perceptron")
         self.connect('destroy', Gtk.main_quit)
         self.set_default_size(self.width, self.height)
@@ -108,6 +115,10 @@ class Plot2DBoundary(Gtk.Window):
     def refresh_screen(self):
         """
         """
+        if self.neuron.change == 1.0:
+            self.neuron.learn()
+            if self.write_to_file:
+                self.save_drawing_to_file("%05d" % (self.neuron.count))
         self.drawing_area.queue_draw()
         GLib.timeout_add(self.refresh_rate, self.refresh_screen)
 
@@ -121,7 +132,6 @@ class Plot2DBoundary(Gtk.Window):
         https://www.cairographics.org/samples/
         context - cairo.Context
         """
-        self.neuron.learn()
         w0, w1, w2 = self.neuron.weights
     
         context.set_source_rgb(0.6, 0.6, 0.6)
@@ -166,6 +176,28 @@ class Plot2DBoundary(Gtk.Window):
         This is called when the mouse is pressed
         """
         self.neuron.rand_weights()
+
+    def save_drawing_to_file(self, file_name):
+        """
+        """
+        allocation = self.drawing_area.get_allocation()
+
+        self.drawing_area.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,
+                                                       allocation.width,
+                                                       allocation.height)
+
+        context = cairo.Context(self.drawing_area.surface)
+
+        context.rectangle(0, 0, allocation.width, allocation.height)
+        context.set_source_rgb(1.0, 1.0, 1.0)
+        context.fill()
+
+        self.draw(context, allocation.width, allocation.height)
+
+        self.drawing_area.surface.write_to_png(file_name + ".png")
+
+        self.drawing_area.surface.flush()
+        self.drawing_area.surface.finish()
 
 if __name__ == '__main__':
     """
