@@ -202,5 +202,5 @@ class Plot2DBoundary(Gtk.Window):
 if __name__ == '__main__':
     """
     """
-    neuron = Perceptron(X_AND, Y_AND)
+    neuron = Perceptron(X_OR, Y_OR)
     window = Plot2DBoundary(neuron)
