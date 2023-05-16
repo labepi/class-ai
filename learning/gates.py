@@ -2,22 +2,30 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GLib
 
-import time
+import sys
 import cairo
 import random
-from math import pi
 
-X_AND = [(0, 0), (0, 1), (1, 0), (1, 1)]
-Y_AND = [0, 0, 0, 1]
+USAGE = """\
+Visual representation of Perceptron learning process for Logic gates.
+
+{} <gate> <rand>
+  <gate> - Logic gate (OR, AND, XOR or NAND).
+  <rand> - Number of random noisy additional samples per input.\
+"""
 
 X_OR = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_OR = [0, 1, 1, 1]
-
+X_AND = [(0, 0), (0, 1), (1, 0), (1, 1)]
+Y_AND = [0, 0, 0, 1]
+X_XOR = [(0, 0), (0, 1), (1, 0), (1, 1)]
+Y_XOR = [0, 1, 1, 0]
 X_NAND = [(0, 0), (0, 1), (1, 0), (1, 1)]
 Y_NAND = [1, 1, 1, 0]
 
-X_XOR = [(0, 0), (0, 1), (1, 0), (1, 1)]
-Y_XOR = [0, 1, 1, 0]
+X = [X_OR, X_AND, X_XOR, X_NAND]
+Y = [Y_OR, Y_AND, Y_XOR, Y_NAND]
+I = {"OR": 0, "AND": 1, "XOR": 2, "NAND": 3}
 
 def f_step(value):
     """
@@ -31,7 +39,7 @@ def f_rand():
     """
     return 2 * random.random() - 1
 
-class Perceptron:
+class Perceptron2D:
     """
     """
     def __init__(self, X, Y, learning_rate=0.01, bias=1.0):
@@ -202,5 +210,20 @@ class Plot2DBoundary(Gtk.Window):
 if __name__ == '__main__':
     """
     """
-    neuron = Perceptron(X_OR, Y_OR)
-    window = Plot2DBoundary(neuron)
+    if len(sys.argv) == 3:
+        gate = sys.argv[1]
+        rand = int(sys.argv[2])
+        xset = X[I[gate]]
+        yset = Y[I[gate]]
+        while rand > 0:
+            for i in range(4):
+                x1, x2 = xset[i]
+                x1 = x1 + f_rand() / 3.6
+                x2 = x2 + f_rand() / 3.6
+                xset.append((x1, x2))
+                yset.append(yset[i])
+            rand = rand - 1
+        neuron = Perceptron2D(xset, yset)
+        window = Plot2DBoundary(neuron)
+    else:
+        print(USAGE.format(sys.argv[0]))
