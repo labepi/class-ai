@@ -1,38 +1,4 @@
-import sys
 import random
-
-X_A = [[0,0,1,0,0,
-        0,1,0,1,0,
-        0,1,1,1,0,
-        0,1,0,1,0,
-        0,1,0,1,0],
-
-       [0,1,1,1,0,
-        0,1,0,0,0,
-        0,1,1,0,0,
-        0,1,0,0,0,
-        0,1,1,1,0],
-
-       [0,1,1,1,0,
-        0,0,1,0,0,
-        0,0,1,0,0,
-        0,0,1,0,0,
-        0,1,1,1,0],
-
-       [0,0,1,0,0,
-        0,1,0,1,0,
-        0,1,0,1,0,
-        0,1,0,1,0,
-        0,0,1,0,0],
-
-       [0,1,0,1,0,
-        0,1,0,1,0,
-        0,1,0,1,0,
-        0,1,0,1,0,
-        0,0,1,0,0]]
-
-Y_A = [1, 0, 0, 0, 0]
-
 
 def f_step(value):
     """
@@ -100,22 +66,3 @@ class Perceptron:
                 self.changed = True
 
         self.count = self.count + 1
-
-
-if __name__ == '__main__':
-    """
-    """
-    neuron = Perceptron(X_A, Y_A)
-    neuron.rand_weights()
-
-    # Training
-    while neuron.changed:
-        neuron.learn()
-
-    # Using
-    T = [0,0,1,0,0,
-         0,1,0,1,0,
-         0,1,1,1,0,
-         0,1,0,1,0,
-         0,1,0,1,0]
-    print(neuron.count, neuron.compute_output(T))
