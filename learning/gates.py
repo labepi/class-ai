@@ -6,6 +6,8 @@ import sys
 import cairo
 import random
 
+import neuron
+
 USAGE = """\
 Visual representation of Perceptron learning process for Logic gates.
 
@@ -39,50 +41,6 @@ def f_rand():
     """
     return 2 * random.random() - 1
 
-class Perceptron2D:
-    """
-    """
-    def __init__(self, X, Y, learning_rate=0.01, bias=1.0):
-        """
-        """
-        self.training_set = X
-        self.desired_set = Y
-        self.set_size = len(self.training_set)
-        self.bias = bias
-        self.weights = [-0.5, 0.0, 1.0]
-        self.f_activation = f_step
-        self.learning_rate = learning_rate
-        self.count = 0
-        self.change = 1.0
-
-    def rand_weights(self):
-        """
-        """
-        self.change = 1.0
-        self.weights = [f_rand(), f_rand(), f_rand()]
-
-    def learn(self):
-        """
-        """
-        w0, w1, w2 = self.weights
- 
-        order = random.sample(list(range(self.set_size)), self.set_size)
-        self.change = 0.0
-        for i in order:
-            x1, x2 = self.training_set[i]
-            d = self.desired_set[i]
- 
-            y = self.f_activation((w0 * self.bias) + (x1 * w1) + (x2 * w2))
- 
-            if d != y:
-                self.change = 1.0
- 
-            w0 = w0 + self.learning_rate * (d - y) * self.bias
-            w1 = w1 + self.learning_rate * (d - y) * x1
-            w2 = w2 + self.learning_rate * (d - y) * x2
-
-        self.weights = [w0, w1, w2]
-        self.count = self.count + 1
 
 class Plot2DBoundary(Gtk.Window):
     """
@@ -123,7 +81,7 @@ class Plot2DBoundary(Gtk.Window):
     def refresh_screen(self):
         """
         """
-        if self.neuron.change == 1.0:
+        if self.neuron.changed == 1.0:
             self.neuron.learn()
             if self.write_to_file:
                 self.save_drawing_to_file("%05d" % (self.neuron.count))
@@ -160,7 +118,7 @@ class Plot2DBoundary(Gtk.Window):
         slope = -(w1 / w2)
         delta = -(w0 / w2) * self.neuron.bias
     
-        context.set_source_rgb(self.neuron.change, 1.0, 0.0)
+        context.set_source_rgb(self.neuron.changed, 1.0, 0.0)
         xo, yo = 28 - 1 * 200, 28 + 200 * (-1 * slope + delta)
         xd, yd = 28 + 2 * 200, 28 + 200 * (2 * slope + delta)
         context.move_to(xo, yo)
@@ -223,7 +181,8 @@ if __name__ == '__main__':
                 xset.append((x1, x2))
                 yset.append(yset[i])
             rand = rand - 1
-        neuron = Perceptron2D(xset, yset)
-        window = Plot2DBoundary(neuron)
+        n = neuron.Perceptron(xset, yset)
+        n.rand_weights()
+        window = Plot2DBoundary(n)
     else:
         print(USAGE.format(sys.argv[0]))
