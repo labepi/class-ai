@@ -9,7 +9,7 @@ import random
 import neuron
 
 USAGE = """\
-Visual representation of Perceptron learning process for Logic gates.
+Visual representation of Perceptron learning process for symbols.
 
 {} <rand>
   <rand> - Number of random noisy additional samples per input.\
