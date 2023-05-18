@@ -29,12 +29,6 @@ X = [X_OR, X_AND, X_XOR, X_NAND]
 Y = [Y_OR, Y_AND, Y_XOR, Y_NAND]
 I = {"OR": 0, "AND": 1, "XOR": 2, "NAND": 3}
 
-def f_step(value):
-    """
-    """
-    if value > 0:
-        return 1.0
-    return 0.0
 
 def f_rand():
     """
