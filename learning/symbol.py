@@ -5,7 +5,15 @@ from gi.repository import Gtk, Gdk, GLib
 import sys
 import copy
 import random
+
 import neuron
+
+USAGE = """\
+Visual representation of Perceptron learning process for Logic gates.
+
+{} <rand>
+  <rand> - Number of random noisy additional samples per input.\
+"""
 
 X = [[0,0,1,0,0,
       0,1,0,1,0,
@@ -37,11 +45,17 @@ X = [[0,0,1,0,0,
       0,1,0,1,0,
       0,0,1,0,0],
 
-     [1,0,0,0,1,
-      1,1,0,1,1,
-      1,0,1,0,1,
-      1,0,0,0,1,
-      1,0,0,0,1],
+     [0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,1],
+
+     [0,0,0,0,1,
+      0,0,0,0,1,
+      0,0,0,0,1,
+      0,0,0,0,0,
+      0,0,0,0,1],
 
      [1,0,0,0,1,
       1,0,0,0,1,
@@ -49,8 +63,8 @@ X = [[0,0,1,0,0,
       1,0,0,0,1,
       1,0,0,0,1]]
 
-#    A  E  I  O  U  M  H
-Y = [0, 1, 0, 0, 0, 0, 0]
+#    A  E  I  O  U  .  !  H
+Y = [1, 0, 0, 0, 0, 0, 0, 0]
 
 class Plot2DBoundary(Gtk.Window):
     """
@@ -63,7 +77,7 @@ class Plot2DBoundary(Gtk.Window):
         self.neuron = neuron
         self.width = width
         self.height = height
-        self.refresh_rate = 1000 / 10
+        self.refresh_rate = 1000 / 60
         self.write_to_file = write_to_file
         self.set_title("Perceptron")
         self.connect('destroy', Gtk.main_quit)
@@ -128,20 +142,21 @@ class Plot2DBoundary(Gtk.Window):
             else:
                 weights.append((v, 0.0, 0.0))
 
-        x = 28
-        y = 28
+        x = 38
+        y = 38
         for i in range(1, len(self.neuron.weights)):
-            w = weights[i]
-            context.set_source_rgb(w[0], w[1], w[2])
+            r, g, b = weights[i]
+            context.set_source_rgb(r, g, b)
             context.rectangle(x, y, 30, 30)
             context.fill()
             x = x + 30
             if (i % 5 == 0):
-                x = 28
+                x = 38
                 y = y + 30
 
-        context.set_source_rgb(weights[0][0], weights[0][1], weights[0][2])
-        context.rectangle(198, 198, 30, 30)
+        r, g, b = weights[0]
+        context.set_source_rgb(r, g, b)
+        context.rectangle(188, 188, 30, 30)
         context.fill()
 
         self.neuron.learn()
@@ -201,18 +216,20 @@ def f_rand():
 if __name__ == '__main__':
     """
     """
-    rand = int(sys.argv[1])
-    xset = copy.copy(X)
-    yset = copy.copy(Y)
-    while rand > 0:
-        for i in range(len(X)):
-            x = copy.copy(xset[i])
-            for b in range(len(x)):
-                x[b] = x[b] + f_rand() * 0.5
-            xset.append(x)
-            yset.append(yset[i])
-        rand = rand - 1
-    n = neuron.Perceptron(xset, yset)
-    n.rand_weights()
-    print(len(xset), len(yset), n.set_size)
-    w = Plot2DBoundary(n)
+    if len(sys.argv) == 2:
+        rand = int(sys.argv[1])
+        xset = copy.copy(X)
+        yset = copy.copy(Y)
+        while rand > 0:
+            for i in range(len(X)):
+                x = copy.copy(xset[i])
+                for b in range(len(x)):
+                    x[b] = x[b] + f_rand() * 0.6
+                xset.append(x)
+                yset.append(yset[i])
+            rand = rand - 1
+        n = neuron.Perceptron(xset, yset)
+        n.rand_weights()
+        w = Plot2DBoundary(n)
+    else:
+        print(USAGE.format(sys.argv[0]))

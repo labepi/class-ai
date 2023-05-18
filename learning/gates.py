@@ -135,6 +135,8 @@ class Plot2DBoundary(Gtk.Window):
         """
         This is called when the mouse is pressed
         """
+        n = self.neuron
+        self.neuron = neuron.Perceptron(n.training_set, n.desired_set)
         self.neuron.rand_weights()
 
     def save_drawing_to_file(self, file_name):
@@ -170,8 +172,8 @@ if __name__ == '__main__':
         while rand > 0:
             for i in range(4):
                 x1, x2 = xset[i]
-                x1 = x1 + f_rand() / 3.6
-                x2 = x2 + f_rand() / 3.6
+                x1 = x1 + f_rand() * 0.3
+                x2 = x2 + f_rand() * 0.3
                 xset.append((x1, x2))
                 yset.append(yset[i])
             rand = rand - 1
