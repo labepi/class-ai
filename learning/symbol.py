@@ -41,10 +41,16 @@ X = [[0,0,1,0,0,
       1,1,0,1,1,
       1,0,1,0,1,
       1,0,0,0,1,
+      1,0,0,0,1],
+
+     [1,0,0,0,1,
+      1,0,0,0,1,
+      1,1,1,1,1,
+      1,0,0,0,1,
       1,0,0,0,1]]
 
-#    A  E  I  O  U  M
-Y = [1, 0, 0, 0, 0, 0]
+#    A  E  I  O  U  M  H
+Y = [0, 1, 0, 0, 0, 0, 0]
 
 class Plot2DBoundary(Gtk.Window):
     """
@@ -104,7 +110,7 @@ class Plot2DBoundary(Gtk.Window):
         """
         self.neuron.weights
     
-        context.set_source_rgb(0.0, self.neuron.changed, 0.0)
+        context.set_source_rgb(0.0, 1 - self.neuron.changed, 0.0)
         context.rectangle(0, 0, 256, 256)
         context.fill()
     
@@ -116,13 +122,17 @@ class Plot2DBoundary(Gtk.Window):
         l = min(self.neuron.weights)
         weights = []
         for w in self.neuron.weights:
-            weights.append((w - l) / (b - l))
+            v = (w - l) / (b - l)
+            if w > 0:
+                weights.append((0.0, 0.0, v))
+            else:
+                weights.append((v, 0.0, 0.0))
 
         x = 28
         y = 28
         for i in range(1, len(self.neuron.weights)):
             w = weights[i]
-            context.set_source_rgb(w, w, w)
+            context.set_source_rgb(w[0], w[1], w[2])
             context.rectangle(x, y, 30, 30)
             context.fill()
             x = x + 30
@@ -130,7 +140,7 @@ class Plot2DBoundary(Gtk.Window):
                 x = 28
                 y = y + 30
 
-        context.set_source_rgb(weights[0], weights[0], weights[0])
+        context.set_source_rgb(weights[0][0], weights[0][1], weights[0][2])
         context.rectangle(198, 198, 30, 30)
         context.fill()
 
@@ -181,23 +191,26 @@ class Plot2DBoundary(Gtk.Window):
 def invert(a):
     """
     """
-    return -a + 1 
+    return 1 - a 
+
+def f_rand():
+    """
+    """
+    return 2 * random.random() - 1
 
 if __name__ == '__main__':
     """
     """
-    bits = int(sys.argv[1])
-    rand = int(sys.argv[2])
+    rand = int(sys.argv[1])
     xset = copy.copy(X)
     yset = copy.copy(Y)
     while rand > 0:
         for i in range(len(X)):
-            for _ in range(bits):
-                b = random.randint(0, 24)
-                x = copy.copy(xset[i])
-                x[b] = invert(x[b])
-                xset.append(x)
-                yset.append(yset[i])
+            x = copy.copy(xset[i])
+            for b in range(len(x)):
+                x[b] = x[b] + f_rand() * 0.5
+            xset.append(x)
+            yset.append(yset[i])
         rand = rand - 1
     n = neuron.Perceptron(xset, yset)
     n.rand_weights()
