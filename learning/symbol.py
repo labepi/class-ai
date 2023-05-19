@@ -4,6 +4,7 @@ from gi.repository import Gtk, Gdk, GLib
 
 import sys
 import copy
+import cairo
 import random
 
 import neuron
@@ -11,8 +12,9 @@ import neuron
 USAGE = """\
 Visual representation of Perceptron learning process for symbols.
 
-{} <rand>
-  <rand> - Number of random noisy additional samples per input.\
+{} <rand> <gain>
+  <rand> - Number of random noisy additional samples per input.
+  <gain> - Noise gain (should be a value between 0.0 and 1.0).\
 """
 
 X = [[0,0,1,0,0,
@@ -45,28 +47,16 @@ X = [[0,0,1,0,0,
       0,1,0,1,0,
       0,0,1,0,0],
 
-     [0,0,0,0,0,
-      0,0,0,0,0,
-      0,0,0,0,0,
-      0,0,0,0,0,
-      0,0,0,0,1],
-
-     [0,0,0,0,1,
-      0,0,0,0,1,
-      0,0,0,0,1,
-      0,0,0,0,0,
-      0,0,0,0,1],
-
      [1,0,0,0,1,
       1,0,0,0,1,
       1,1,1,1,1,
       1,0,0,0,1,
       1,0,0,0,1]]
 
-#    A  E  I  O  U  .  !  H
-Y = [1, 0, 0, 0, 0, 0, 0, 0]
+#    A  E  I  O  U  H
+Y = [1, 0, 0, 0, 0, 0]
 
-class Plot2DBoundary(Gtk.Window):
+class Plot2DWeights(Gtk.Window):
     """
     """
     def __init__(self, neuron, write_to_file=False, width=256, height=256):
@@ -159,8 +149,6 @@ class Plot2DBoundary(Gtk.Window):
         context.rectangle(188, 188, 30, 30)
         context.fill()
 
-        self.neuron.learn()
-    
     def on_draw(self, drawing_area, context):
         """
         A callback called every time `drawing_area.queue_draw` is called.
@@ -178,7 +166,7 @@ class Plot2DBoundary(Gtk.Window):
         This is called when the mouse is pressed
         """
         n = self.neuron
-        self.neuron = neuron.Perceptron(n.training_set, n.desired_set)
+        self.neuron = neuron.Perceptron(n.training_set, n.desired_set, 0.01)
         self.neuron.rand_weights()
 
     def save_drawing_to_file(self, file_name):
@@ -216,20 +204,21 @@ def f_rand():
 if __name__ == '__main__':
     """
     """
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
         rand = int(sys.argv[1])
+        gain = float(sys.argv[2])
         xset = copy.copy(X)
         yset = copy.copy(Y)
         while rand > 0:
             for i in range(len(X)):
                 x = copy.copy(xset[i])
                 for b in range(len(x)):
-                    x[b] = x[b] + f_rand() * 0.6
+                    x[b] = x[b] + f_rand() * gain
                 xset.append(x)
                 yset.append(yset[i])
             rand = rand - 1
-        n = neuron.Perceptron(xset, yset)
+        n = neuron.Perceptron(xset, yset, 0.01)
         n.rand_weights()
-        w = Plot2DBoundary(n)
+        w = Plot2DWeights(n)
     else:
         print(USAGE.format(sys.argv[0]))

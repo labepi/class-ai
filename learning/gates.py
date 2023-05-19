@@ -11,9 +11,10 @@ import neuron
 USAGE = """\
 Visual representation of Perceptron learning process for Logic gates.
 
-{} <gate> <rand>
+{} <gate> <rand> <gain>
   <gate> - Logic gate (OR, AND, XOR or NAND).
-  <rand> - Number of random noisy additional samples per input.\
+  <rand> - Number of random noisy additional samples per input.
+  <gain> - Noise gain (should be a value between 0.0 and 1.0).\
 """
 
 X_OR = [(0, 0), (0, 1), (1, 0), (1, 1)]
@@ -164,21 +165,22 @@ class Plot2DBoundary(Gtk.Window):
 if __name__ == '__main__':
     """
     """
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 4:
         gate = sys.argv[1]
         rand = int(sys.argv[2])
+        gain = float(sys.argv[3])
         xset = X[I[gate]]
         yset = Y[I[gate]]
         while rand > 0:
             for i in range(4):
                 x1, x2 = xset[i]
-                x1 = x1 + f_rand() * 0.3
-                x2 = x2 + f_rand() * 0.3
+                x1 = x1 + f_rand() * gain
+                x2 = x2 + f_rand() * gain
                 xset.append((x1, x2))
                 yset.append(yset[i])
             rand = rand - 1
         n = neuron.Perceptron(xset, yset)
         n.rand_weights()
-        window = Plot2DBoundary(n)
+        window = Plot2DBoundary(n, True)
     else:
         print(USAGE.format(sys.argv[0]))
