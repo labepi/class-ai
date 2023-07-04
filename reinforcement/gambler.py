@@ -1,7 +1,7 @@
 import sys
 import random
 
-def value_iteration(theta=0.001, p=0.5):
+def value_iteration(p=0.5, theta=0.000000001):
     """
     """
     delta = theta + 1
@@ -19,6 +19,22 @@ def value_iteration(theta=0.001, p=0.5):
             value[state] = max_action[0]
             delta = max(delta, abs(v - value[state]))
     return value
+
+def optimal_policy(value, theta=0.000000001):
+    """
+    """
+    policy = {}
+    for state in range(1, 100):
+        v = value[state]
+        max_action = [(0, 1)]
+        for action in range(1, min(state, 100 - state) + 1):
+            r = p * value[state + action] + (1 - p) * value[state - action]
+            if (r - max_action[0][0]) > theta:
+                max_action = [(r, action)]
+            elif abs(r - max_action[0][0]) <= theta:
+                max_action.append((r, action))
+        policy[state] = max_action
+    return policy
 
 def flip(p):
     """
@@ -46,6 +62,11 @@ if __name__ == "__main__":
     p = float(sys.argv[2])
     print(player(state, p))
     """
-    value = value_iteration()
-    for i in range(0, len(value)):
-        print(i, value[i])
+    p = float(sys.argv[1])
+
+    value = value_iteration(p)
+    policy = optimal_policy(value)
+
+    for state in policy:
+        for action in policy[state]:
+            print(state, action[1])
