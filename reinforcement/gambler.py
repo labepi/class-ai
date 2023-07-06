@@ -1,6 +1,15 @@
 import sys
 import random
 
+USAGE = """\
+Assessment of Gambler's problem using Value Iteration algorithm.
+
+{} <state> <probability> <type>
+  <state> - Initial state (should be a value between 1 and 99).
+  <type> - Player type: 'o' for optimal and 'r' for random.\
+  <probability> - Win probability (should be a value between 0.0 and 1.0).
+"""
+
 def value_iteration(p=0.5, theta=0.000000001):
     """
     """
@@ -85,9 +94,16 @@ if __name__ == "__main__":
         for action in policy[state]:
             print(state, action[1])
     """
-    state = int(sys.argv[1])
-    p = float(sys.argv[2])
-    value = value_iteration(p)
-    policy = optimal_policy(value, p)
-    #print(player_optimal(policy, state, p))
-    print(player_random(state, p))
+    if len(sys.argv) == 4:
+        state = int(sys.argv[1])
+        player = sys.argv[2]
+        p = float(sys.argv[3])
+ 
+        if player == 'r':
+            print(player_random(state, p) / 100)
+        elif player == 'o':
+            value = value_iteration(p)
+            policy = optimal_policy(value, p)
+            print(player_optimal(policy, state, p) / 100)
+    else:
+        print(USAGE.format(sys.argv[0]))
