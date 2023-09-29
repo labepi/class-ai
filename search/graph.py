@@ -2,6 +2,13 @@ import os
 import re
 import math
 
+USAGE = """\
+Find a path from the first to the last node.
+
+{} <graph>
+  <graph> - The graph description from a TGF file.\
+"""
+
 class Graph:
     """
     """
@@ -90,13 +97,17 @@ class Graph:
         memory = []
         self.create_adjacency()
         self.insert_ordered(memory, start, goal)
+        #memory.append(start)
         while memory:
             node_a = self.remove_nearest(memory, goal)
+            #node_a = memory.pop() # lifo
+            #node_a = memory.pop(0) # fifo
             if not visited[node_a]:
                 visited[node_a] = True
                 for node_b in self.adjacency[node_a]:
                     if not visited[node_b]:
                         self.insert_ordered(memory, node_b, goal)
+                        #memory.append(node_b) # both
                         origin[node_b] = node_a
                     if node_b == goal:
                         return origin
@@ -150,7 +161,7 @@ class TGF:
             read_function = self.read_node
             for line in lines:
                 line = line.strip()
-                if line == "#":
+                if line[0] == "#":
                     read_function = self.read_edge
                 else:
                     read_function(line, self.graph)
@@ -158,10 +169,13 @@ class TGF:
         return self.graph
 
 if __name__ == "__main__":
+    """
+    """
     import sys
     if len(sys.argv) > 1:
         g = TGF(sys.argv[1]).read()
         ans = g.search(g.nodes[0], g.nodes[-1])
+        print(ans)
         node = g.nodes[-1]
         g.heuristic(g.nodes[0], g.nodes[-1])
         while node != None:
@@ -170,3 +184,5 @@ if __name__ == "__main__":
                 node = ans[node]
             else:
                 node = None
+    else:
+        print(USAGE.format(sys.argv[0]))
