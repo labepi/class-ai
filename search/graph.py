@@ -1,13 +1,20 @@
-import os
 import re
 import math
+import tgf
 
 USAGE = """\
 Find a path from the first to the last node.
 
-{} <graph>
+{} <method> <graph>
+  <method> - a: A-STAR (heuristic: Euclidean distance), b: BFS, d: DFS.
   <graph> - The graph description from a TGF file.\
 """
+
+AST = 1
+BFS = 2
+DFS = 3
+
+METHOD = {'a': AST, 'b': BFS, 'd': DFS}
 
 class Graph:
     """
@@ -84,7 +91,7 @@ class Graph:
             return True
         return False
 
-    def search(self, start, goal):
+    def search(self, start, goal, method):
         """
         """
         visited = {}
@@ -96,18 +103,28 @@ class Graph:
 
         memory = []
         self.create_adjacency()
-        self.insert_ordered(memory, start, goal)
-        #memory.append(start)
+        # choosing method
+        if method == AST:
+            self.insert_ordered(memory, start, goal)
+        else:
+            memory.append(start) # both
         while memory:
-            node_a = self.remove_nearest(memory, goal)
-            #node_a = memory.pop() # lifo
-            #node_a = memory.pop(0) # fifo
+            # choosing method
+            if method == AST:
+                node_a = self.remove_nearest(memory, goal)
+            elif method == DFS:
+                node_a = memory.pop() # lifo
+            else:
+                node_a = memory.pop(0) # fifo
             if not visited[node_a]:
                 visited[node_a] = True
                 for node_b in self.adjacency[node_a]:
                     if not visited[node_b]:
-                        self.insert_ordered(memory, node_b, goal)
-                        #memory.append(node_b) # both
+                        # choosing method
+                        if method == AST:
+                            self.insert_ordered(memory, node_b, goal)
+                        else:
+                            memory.append(node_b) # both
                         origin[node_b] = node_a
                     if node_b == goal:
                         return origin
@@ -123,66 +140,27 @@ class Graph:
         content.append("info: %s" % self.infos)
         return '\n'.join(content)
 
-class TGF:
-    """
-    """
-    def __init__(self, path=""):
-        """
-        """
-        self.path = path
-        self.graph = None
-
-    def read_node(self, string, graph):
-        """
-        """
-        pattern = "^([0-9]+) ?(.*)$"
-        ans = re.fullmatch(pattern, string)
-        (a, info) = ans.groups()
-        graph.add_node(a, info)
-
-    def read_edge(self, string, graph):
-        """
-        """
-        pattern = "^([0-9]+) ([0-9]+) ?(.*)$"
-        ans = re.fullmatch(pattern, string)
-        (a, b, info) = ans.groups()
-        graph.add_edge((a, b), info)
-
-    def read(self):
-        """
-        """
-        if os.path.isfile(self.path):
-
-            handle = open(self.path)
-            lines = handle.read().strip().split('\n')
-            handle.close()
-
-            self.graph = Graph()
-            read_function = self.read_node
-            for line in lines:
-                line = line.strip()
-                if line[0] == "#":
-                    read_function = self.read_edge
-                else:
-                    read_function(line, self.graph)
-
-        return self.graph
 
 if __name__ == "__main__":
     """
     """
     import sys
-    if len(sys.argv) > 1:
-        g = TGF(sys.argv[1]).read()
-        ans = g.search(g.nodes[0], g.nodes[-1])
-        print(ans)
+    if len(sys.argv) > 2:
+        m = METHOD[sys.argv[1]]
+        g = Graph()
+        tgf.TGF(sys.argv[2]).read(g)
+        ans = g.search(g.nodes[0], g.nodes[-1], m)
         node = g.nodes[-1]
         g.heuristic(g.nodes[0], g.nodes[-1])
+        found = 0
+        count = 0
         while node != None:
-            print(node, g.infos[node])
             if node != ans[node]:
                 node = ans[node]
             else:
+                found = count
                 node = None
+            count = count + 1
+        print(found)
     else:
         print(USAGE.format(sys.argv[0]))
