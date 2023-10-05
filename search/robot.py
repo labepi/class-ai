@@ -18,7 +18,8 @@ class Grid:
         if height == None:
             height = width
         self.dimension = (width, height)
-        self.obstacles = random.sample(range(1, width * height + 1), obstacles)
+        # removing the first and last node from possible obstacles list
+        self.obstacles = random.sample(range(2, width * height), obstacles)
         self.create_nodes()
         self.create_edges()
 
