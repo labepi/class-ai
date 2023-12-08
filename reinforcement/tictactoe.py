@@ -13,8 +13,12 @@ Assessment of TicTacToe game.
 EMPTY = "_"
 CROSS = "x"
 ROUND = "o"
-
 DRAW = "?"
+
+COLOR = {EMPTY: "#cccccc",
+         CROSS: "#ccffcc",
+         ROUND: "#ffcccc",
+         DRAW: "#ccccff"}
 
 COUNT = 0
 
@@ -91,8 +95,16 @@ def print_dot():
     """
     """
     print("digraph {")
+    print("fontname=\"Monospace\"")
+    print("node [shape=box,fontname=\"Monospace\",style=filled]")
+    print("")
     for k in STATES:
-        print("{} [label=\"{}\"]".format(k, STATES[k].state))
+        print("{} [label=\"{}\\n{}\\n{}\",\
+                   color=\"{}\"]".format(k,
+                                         STATES[k].state[:3],
+                                         STATES[k].state[3:6],
+                                         STATES[k].state[6:],
+                                         COLOR[STATES[k].status]))
     for k in STATES:
         for d in STATES[k].children:
             print("{} -> {}".format(k, d))
