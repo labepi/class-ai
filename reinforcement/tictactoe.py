@@ -35,10 +35,10 @@ class State:
         self.status = status
         self.children = []
 
-    def add_child(self, state):
+    def add_child(self, state, position, player):
         """
         """
-        self.children.append(state)
+        self.children.append([state, position, player])
 
 def empty_positions(state):
     """
@@ -95,22 +95,28 @@ def print_dot():
     """
     """
     print("digraph {")
-    print("fontname=\"Monospace\"")
-    print("node [shape=box,fontname=\"Monospace\",style=filled]")
-    print("")
+    print("  fontname=\"Monospace\"")
+    print("  node [shape=box,fontname=\"Monospace\",style=filled]")
+    print("  edge [fontname=\"Monospace\",color=\"#cccccc\"]")
     for k in STATES:
-        print("{} [label=\"{}\\n{}\\n{}\",\
-                   color=\"{}\"]".format(k,
-                                         STATES[k].state[:3],
-                                         STATES[k].state[3:6],
-                                         STATES[k].state[6:],
-                                         COLOR[STATES[k].status]))
+        line1 = STATES[k].state[:3]
+        line2 = STATES[k].state[3:6]
+        line3 = STATES[k].state[6:]
+        status = COLOR[STATES[k].status]
+        print("  {} [label=\"{}\\n{}\\n{}\",color=\"{}\"]".format(k,
+                                                                  line1,
+                                                                  line2,
+                                                                  line3,
+                                                                  status))
     for k in STATES:
-        for d in STATES[k].children:
-            print("{} -> {}".format(k, d))
+        for state, position, player in STATES[k].children:
+            print("  {} -> {} [label=\"{}:{}\"]".format(k,
+                                                       state,
+                                                       position,
+                                                       player))
     print("}")
 
-def search(state, player, root=0):
+def search(state, player, root=0, position=None):
     """
     """
     global COUNT
@@ -119,12 +125,12 @@ def search(state, player, root=0):
     status = verify_status(state)
     STATES[count] = State(count, state, status)
     if root > 0:
-        STATES[root].add_child(count)
+        STATES[root].add_child(count, position, change_player(player))
     if status == EMPTY:
         for p in empty_positions(state):
             state[p] = player
             player = change_player(player)
-            search(state, player, count)
+            search(state, player, count, p)
             state[p] = '_'
             player = change_player(player)
 
