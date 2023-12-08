@@ -15,6 +15,8 @@ CROSS = "x"
 ROUND = "o"
 DRAW = "?"
 
+COUNTER = {CROSS: 0, ROUND: 0, DRAW: 0}
+
 COLOR = {EMPTY: "#cccccc",
          CROSS: "#ccffcc",
          ROUND: "#ffcccc",
@@ -111,10 +113,47 @@ def print_dot():
     for k in STATES:
         for state, position, player in STATES[k].children:
             print("  {} -> {} [label=\"{}:{}\"]".format(k,
-                                                       state,
-                                                       position,
-                                                       player))
+                                                        state,
+                                                        position,
+                                                        player))
     print("}")
+
+def print_state(state):
+    """
+    """
+    print(" ".join(state[:3]))
+    print(" ".join(state[3:6]))
+    print(" ".join(state[6:]))
+
+def choose_position(values):
+    """
+    """
+    return list(values)[0]
+
+def play(state):
+    """
+    """
+    while verify_status(state) == EMPTY:
+        print_state(state)
+        position = int(input("play 'x' on position: "))
+        state[position] = CROSS
+        if verify_status(state) == EMPTY:
+            print_state(state)
+            values = {}
+            for position in empty_positions(state):
+                global COUNTER
+                COUNTER = {CROSS: 0, ROUND: 0, DRAW: 0}
+                state[position] = ROUND
+                search(state, CROSS)
+                state[position] = EMPTY
+                print(position, COUNTER)
+                values[position] = COUNTER
+            position = choose_position(values)
+            #position = int(input("play 'o' on position: "))
+            state[position] = ROUND
+    print_state(state)
+    print("result:", verify_status(state))
+
 
 def search(state, player, root=0, position=None):
     """
@@ -131,14 +170,17 @@ def search(state, player, root=0, position=None):
             state[p] = player
             player = change_player(player)
             search(state, player, count, p)
-            state[p] = '_'
+            state[p] = EMPTY
             player = change_player(player)
+    else:
+        COUNTER[status] += 1
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
         player = sys.argv[1]
         state = list(sys.argv[2])
-        search(state, player)
-        print_dot()
+        #search(state, player)
+        #print_dot()
+        play(state)
     else:
         print(USAGE.format(sys.argv[0]))
