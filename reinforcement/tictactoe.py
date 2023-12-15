@@ -140,7 +140,7 @@ def choose_position(state, player):
         if (move == None) or (player == ROUND and T[value] > T[key]):
             value = key
             move = p
-        elif (player == CROSS):
+        elif (player == CROSS and T[value] < T[key]):
             value = key
             move = p
         s[p] = EMPTY
@@ -150,15 +150,25 @@ def choose_position(state, player):
 def play(state):
     """
     """
+    player = CROSS
     while verify_status(state) == EMPTY:
+        #print_state(state)
+        #position = choose_position(state, player)
+        #print(player, "choosed position: ", position)
+        #state[position] = player
+        #player = change_player(player)
+        #input("press to continue")
+
         print_state(state)
-        position = int(input("play 'x' on position: "))
-        state[position] = CROSS
+        position = int(input("x position: "))
+        state[position] = player
+        player = change_player(player)
         if verify_status(state) == EMPTY:
             print_state(state)
-            position = choose_position(state, ROUND)
-            print("'o' choosed position:", position)
-            state[position] = ROUND
+            position = choose_position(state, player)
+            print(player, "choosed position:", position)
+            state[position] = player
+            player = change_player(player)
     update_table(state)
     print_state(state)
     print("result:", verify_status(state))
@@ -197,6 +207,7 @@ def search(state, player, root=0, position=None):
             T[old_key] += T[key]
             state[p] = EMPTY
             player = change_player(player)
+        T[old_key] = 0.000001 * (T[old_key] / len(empty_positions(state)))
     else:
         COUNTER[status] += 1
         update_table(state)
@@ -209,7 +220,7 @@ if __name__ == "__main__":
         #print(len(T))
         #for s in T:
         #    print(s, T[s])
-        print_dot()
-        #play(state)
+        #print_dot()
+        play(state)
     else:
         print(USAGE.format(sys.argv[0]))

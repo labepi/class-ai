@@ -6,8 +6,8 @@ Assessment of Gambler's problem using Value Iteration algorithm.
 
 {} <state> <probability> <type>
   <state> - Initial state (should be a value between 1 and 99).
-  <type> - Player type: 'o' for optimal and 'r' for random.\
   <probability> - Win probability (should be a value between 0.0 and 1.0).
+  <type> - Player type: 'o' for optimal and 'r' for random.\
 """
 
 def value_iteration(p=0.5, theta=0.000000001):
@@ -96,8 +96,8 @@ if __name__ == "__main__":
     """
     if len(sys.argv) == 4:
         state = int(sys.argv[1])
-        player = sys.argv[2]
-        p = float(sys.argv[3])
+        p = float(sys.argv[2])
+        player = sys.argv[3]
  
         if player == 'r':
             print(player_random(state, p) / 100)
