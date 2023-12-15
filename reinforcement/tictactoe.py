@@ -1,4 +1,5 @@
 import sys
+import copy
 import random
 
 USAGE = """\
@@ -25,6 +26,8 @@ COLOR = {EMPTY: "#cccccc",
 COUNT = 0
 
 STATES = {}
+
+T = {}
 
 class State:
     """
@@ -100,22 +103,21 @@ def print_dot():
     print("  fontname=\"Monospace\"")
     print("  node [shape=box,fontname=\"Monospace\",style=filled]")
     print("  edge [fontname=\"Monospace\",color=\"#cccccc\"]")
+
+    node_str = "  {} [label=\"{}\\n{}\\n{}\\n({})\",color=\"{}\"]"
     for k in STATES:
+        value = T["".join(STATES[k].state)]
         line1 = STATES[k].state[:3]
         line2 = STATES[k].state[3:6]
         line3 = STATES[k].state[6:]
         status = COLOR[STATES[k].status]
-        print("  {} [label=\"{}\\n{}\\n{}\",color=\"{}\"]".format(k,
-                                                                  line1,
-                                                                  line2,
-                                                                  line3,
-                                                                  status))
+        print(node_str.format(k, line1, line2, line3, value, status))
+
+    edge_str = "  {} -> {} [label=\"{}:{}\"]"
     for k in STATES:
         for state, position, player in STATES[k].children:
-            print("  {} -> {} [label=\"{}:{}\"]".format(k,
-                                                        state,
-                                                        position,
-                                                        player))
+            print(edge_str.format(k, state, position, player))
+
     print("}")
 
 def print_state(state):
@@ -125,10 +127,25 @@ def print_state(state):
     print(" ".join(state[3:6]))
     print(" ".join(state[6:]))
 
-def choose_position(values):
+def choose_position(state, player):
     """
     """
-    return list(values)[0]
+    s = copy.copy(state)
+    value = None
+    move = None
+    for p in empty_positions(state):
+        s[p] = player
+        key = "".join(s)
+        print(p, T[key])
+        if (move == None) or (player == ROUND and T[value] > T[key]):
+            value = key
+            move = p
+        elif (player == CROSS):
+            value = key
+            move = p
+        s[p] = EMPTY
+        
+    return move
 
 def play(state):
     """
@@ -139,21 +156,24 @@ def play(state):
         state[position] = CROSS
         if verify_status(state) == EMPTY:
             print_state(state)
-            values = {}
-            for position in empty_positions(state):
-                global COUNTER
-                COUNTER = {CROSS: 0, ROUND: 0, DRAW: 0}
-                state[position] = ROUND
-                search(state, CROSS)
-                state[position] = EMPTY
-                print(position, COUNTER)
-                values[position] = COUNTER
-            position = choose_position(values)
-            #position = int(input("play 'o' on position: "))
+            position = choose_position(state, ROUND)
+            print("'o' choosed position:", position)
             state[position] = ROUND
+    update_table(state)
     print_state(state)
     print("result:", verify_status(state))
 
+def update_table(state):
+    """
+    """
+    result = verify_status(state)
+    key = "".join(state)
+    if result == CROSS:
+        T[key] = +2
+    elif result == ROUND:
+        T[key] = -2
+    else:
+        T[key] = +1
 
 def search(state, player, root=0, position=None):
     """
@@ -166,21 +186,30 @@ def search(state, player, root=0, position=None):
     if root > 0:
         STATES[root].add_child(count, position, change_player(player))
     if status == EMPTY:
+        old_state = copy.copy(state)
+        old_key = "".join(old_state)
+        T[old_key] = 0
         for p in empty_positions(state):
             state[p] = player
             player = change_player(player)
             search(state, player, count, p)
+            key = "".join(state)
+            T[old_key] += T[key]
             state[p] = EMPTY
             player = change_player(player)
     else:
         COUNTER[status] += 1
+        update_table(state)
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
         player = sys.argv[1]
         state = list(sys.argv[2])
-        #search(state, player)
-        #print_dot()
-        play(state)
+        search(state, player)
+        #print(len(T))
+        #for s in T:
+        #    print(s, T[s])
+        print_dot()
+        #play(state)
     else:
         print(USAGE.format(sys.argv[0]))
